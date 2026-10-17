@@ -1,3 +1,4 @@
+
 using backend.Data;
 using backend.DTOs;
 using backend.Models;
@@ -14,10 +15,11 @@ public class AppointmentService
         _context = context;
     }
 
-    public async Task<List<AppointmentDto>> GetAllAsync()
+    public async Task<List<AppointmentDto>> GetAllAsync(int companyId)
     {
         return await _context.Appointments
             .AsNoTracking()
+            .Where(appointment => appointment.CompanyId == companyId)
             .Select(appointment => new AppointmentDto
             {
                 Id = appointment.Id,
@@ -32,11 +34,15 @@ public class AppointmentService
             .ToListAsync();
     }
 
-    public async Task<AppointmentDto?> GetByIdAsync(int id)
+    public async Task<AppointmentDto?> GetByIdAsync(
+        int id,
+        int companyId)
     {
         return await _context.Appointments
             .AsNoTracking()
-            .Where(appointment => appointment.Id == id)
+            .Where(appointment =>
+                appointment.Id == id &&
+                appointment.CompanyId == companyId)
             .Select(appointment => new AppointmentDto
             {
                 Id = appointment.Id,
@@ -51,8 +57,8 @@ public class AppointmentService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<(AppointmentDto? Appointment, string? Error)> CreateAsync(
-        CreateAppointmentDto dto)
+    public async Task<(AppointmentDto? Appointment, string? Error)>
+        CreateAsync(CreateAppointmentDto dto, int companyId)
     {
         if (dto.EndAt <= dto.StartAt)
         {
@@ -60,25 +66,24 @@ public class AppointmentService
         }
 
         var companyExists = await _context.Companies
-            .AnyAsync(company => company.Id == dto.CompanyId);
+            .AnyAsync(company => company.Id == companyId);
 
         if (!companyExists)
         {
-            return (null, "The specified company does not exist.");
+            return (null, "The authenticated company does not exist.");
         }
 
         var customer = await _context.Customers
             .FirstOrDefaultAsync(customer =>
-                customer.Id == dto.CustomerId);
+                customer.Id == dto.CustomerId &&
+                customer.CompanyId == companyId);
 
         if (customer is null)
         {
-            return (null, "The specified customer does not exist.");
-        }
-
-        if (customer.CompanyId != dto.CompanyId)
-        {
-            return (null, "The customer does not belong to the specified company.");
+            return (
+                null,
+                "The specified customer does not exist in your company."
+            );
         }
 
         var appointment = new Appointment
@@ -87,8 +92,8 @@ public class AppointmentService
             StartAt = dto.StartAt,
             EndAt = dto.EndAt,
             Notes = dto.Notes,
-            CompanyId = dto.CompanyId,
-            CustomerId = dto.CustomerId
+            CompanyId = companyId,
+            CustomerId = customer.Id
         };
 
         _context.Appointments.Add(appointment);
@@ -110,9 +115,8 @@ public class AppointmentService
         );
     }
 
-    public async Task<(AppointmentDto? Appointment, string? Error)> UpdateAsync(
-        int id,
-        UpdateAppointmentDto dto)
+    public async Task<(AppointmentDto? Appointment, string? Error)>
+        UpdateAsync(int id, UpdateAppointmentDto dto, int companyId)
     {
         if (dto.EndAt <= dto.StartAt)
         {
@@ -120,7 +124,9 @@ public class AppointmentService
         }
 
         var appointment = await _context.Appointments
-            .FirstOrDefaultAsync(appointment => appointment.Id == id);
+            .FirstOrDefaultAsync(appointment =>
+                appointment.Id == id &&
+                appointment.CompanyId == companyId);
 
         if (appointment is null)
         {
@@ -151,10 +157,12 @@ public class AppointmentService
         );
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int companyId)
     {
         var appointment = await _context.Appointments
-            .FirstOrDefaultAsync(appointment => appointment.Id == id);
+            .FirstOrDefaultAsync(appointment =>
+                appointment.Id == id &&
+                appointment.CompanyId == companyId);
 
         if (appointment is null)
         {

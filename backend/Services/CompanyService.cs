@@ -1,3 +1,4 @@
+
 using backend.Data;
 using backend.DTOs;
 using backend.Models;
@@ -14,26 +15,13 @@ public class CompanyService
         _context = context;
     }
 
-    public async Task<List<CompanyDto>> GetAllAsync()
+    public async Task<CompanyDto?> GetByIdAsync(int id, int companyId)
     {
         return await _context.Companies
             .AsNoTracking()
-            .Select(company => new CompanyDto
-            {
-                Id = company.Id,
-                Name = company.Name,
-                TaxId = company.TaxId,
-                CreatedAt = company.CreatedAt,
-                IsActive = company.IsActive
-            })
-            .ToListAsync();
-    }
-
-    public async Task<CompanyDto?> GetByIdAsync(int id)
-    {
-        return await _context.Companies
-            .AsNoTracking()
-            .Where(company => company.Id == id)
+            .Where(company =>
+                company.Id == id &&
+                company.Id == companyId)
             .Select(company => new CompanyDto
             {
                 Id = company.Id,
@@ -45,15 +33,24 @@ public class CompanyService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<CompanyDto> CreateAsync(CreateCompanyDto dto)
+    public async Task<CompanyDto?> UpdateAsync(
+        int id,
+        UpdateCompanyDto dto,
+        int companyId)
     {
-        var company = new Company
-        {
-            Name = dto.Name,
-            TaxId = dto.TaxId
-        };
+        var company = await _context.Companies
+            .FirstOrDefaultAsync(company =>
+                company.Id == id &&
+                company.Id == companyId);
 
-        _context.Companies.Add(company);
+        if (company is null)
+        {
+            return null;
+        }
+
+        company.Name = dto.Name;
+        company.TaxId = dto.TaxId;
+        company.IsActive = dto.IsActive;
 
         await _context.SaveChangesAsync();
 
@@ -65,46 +62,5 @@ public class CompanyService
             CreatedAt = company.CreatedAt,
             IsActive = company.IsActive
         };
-    }
-
-    public async Task<CompanyDto?> UpdateAsync(int id, UpdateCompanyDto dto)
-{
-    var company = await _context.Companies.FindAsync(id);
-
-    if (company is null)
-    {
-        return null;
-    }
-
-    company.Name = dto.Name;
-    company.TaxId = dto.TaxId;
-    company.IsActive = dto.IsActive;
-
-    await _context.SaveChangesAsync();
-
-    return new CompanyDto
-    {
-        Id = company.Id,
-        Name = company.Name,
-        TaxId = company.TaxId,
-        CreatedAt = company.CreatedAt,
-        IsActive = company.IsActive
-    };
-}
-
-    public async Task<bool> DeleteAsync(int id)
-    {
-        var company = await _context.Companies.FindAsync(id);
-
-        if (company is null)
-        {
-            return false;
-        }
-
-        _context.Companies.Remove(company);
-
-        await _context.SaveChangesAsync();
-
-        return true;
     }
 }

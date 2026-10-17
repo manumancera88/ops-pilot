@@ -1,7 +1,8 @@
+
 using backend.DTOs;
 using backend.Services;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
@@ -17,63 +18,51 @@ public class CompaniesController : ControllerBase
         _service = service;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<CompanyDto>>> GetAll()
+    private int? GetCompanyId()
     {
-        var companies = await _service.GetAllAsync();
+        var value = User.FindFirst("companyId")?.Value;
 
-        return Ok(companies);
+        return int.TryParse(value, out var companyId)
+            ? companyId
+            : null;
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<CompanyDto>> GetById(int id)
     {
-        var company = await _service.GetByIdAsync(id);
+        var companyId = GetCompanyId();
+
+        if (companyId is null)
+            return Unauthorized();
+
+        var company = await _service.GetByIdAsync(
+            id,
+            companyId.Value);
 
         if (company is null)
-        {
             return NotFound();
-        }
 
         return Ok(company);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<CompanyDto>> Create(CreateCompanyDto dto)
-    {
-        var company = await _service.CreateAsync(dto);
-
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id = company.Id },
-            company);
-    }
-    
     [HttpPut("{id:int}")]
-public async Task<ActionResult<CompanyDto>> Update(
-    int id,
-    UpdateCompanyDto dto)
-{
-    var company = await _service.UpdateAsync(id, dto);
-
-    if (company is null)
+    public async Task<ActionResult<CompanyDto>> Update(
+        int id,
+        UpdateCompanyDto dto)
     {
-        return NotFound();
-    }
+        var companyId = GetCompanyId();
 
-    return Ok(company);
-}
+        if (companyId is null)
+            return Unauthorized();
 
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var deleted = await _service.DeleteAsync(id);
+        var company = await _service.UpdateAsync(
+            id,
+            dto,
+            companyId.Value);
 
-        if (!deleted)
-        {
+        if (company is null)
             return NotFound();
-        }
 
-        return NoContent();
+        return Ok(company);
     }
 }

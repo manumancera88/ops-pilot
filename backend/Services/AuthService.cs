@@ -21,71 +21,71 @@ public class AuthService
         _jwtService = jwtService;
     }
 
-    public async Task<(UserDto? User, string? Error)> RegisterAsync(
-        RegisterDto dto)
+public async Task<(UserDto? User, string? Error)> RegisterAsync(
+    RegisterCompanyDto dto)
+{
+    if (string.IsNullOrWhiteSpace(dto.CompanyName))
+        return (null, "Company name is required.");
+
+    if (string.IsNullOrWhiteSpace(dto.Name))
+        return (null, "Name is required.");
+
+    if (string.IsNullOrWhiteSpace(dto.Email))
+        return (null, "Email is required.");
+
+    if (string.IsNullOrWhiteSpace(dto.Password))
+        return (null, "Password is required.");
+
+    if (dto.Password.Length < 6)
+        return (null, "Password must have at least 6 characters.");
+
+    var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+
+    var emailExists = await _context.Users
+        .AnyAsync(user => user.Email == normalizedEmail);
+
+    if (emailExists)
+        return (null, "A user with this email already exists.");
+
+    await using var transaction =
+        await _context.Database.BeginTransactionAsync();
+
+    var company = new Company
     {
-        if (string.IsNullOrWhiteSpace(dto.Name))
+        Name = dto.CompanyName.Trim(),
+        TaxId = string.IsNullOrWhiteSpace(dto.TaxId)
+            ? null
+            : dto.TaxId.Trim()
+    };
+
+    _context.Companies.Add(company);
+    await _context.SaveChangesAsync();
+
+    var user = new User
+    {
+        Name = dto.Name.Trim(),
+        Email = normalizedEmail,
+        PasswordHash = _passwordService.HashPassword(dto.Password),
+        CompanyId = company.Id
+    };
+
+    _context.Users.Add(user);
+    await _context.SaveChangesAsync();
+
+    await transaction.CommitAsync();
+
+    return (
+        new UserDto
         {
-            return (null, "Name is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(dto.Email))
-        {
-            return (null, "Email is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(dto.Password))
-        {
-            return (null, "Password is required.");
-        }
-
-        if (dto.Password.Length < 6)
-        {
-            return (null, "Password must have at least 6 characters.");
-        }
-
-        var companyExists = await _context.Companies
-            .AnyAsync(company => company.Id == dto.CompanyId);
-
-        if (!companyExists)
-        {
-            return (null, "The specified company does not exist.");
-        }
-
-        var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
-
-        var emailExists = await _context.Users
-            .AnyAsync(user => user.Email == normalizedEmail);
-
-        if (emailExists)
-        {
-            return (null, "A user with this email already exists.");
-        }
-
-        var user = new User
-        {
-            Name = dto.Name.Trim(),
-            Email = normalizedEmail,
-            PasswordHash = _passwordService.HashPassword(dto.Password),
-            CompanyId = dto.CompanyId
-        };
-
-        _context.Users.Add(user);
-
-        await _context.SaveChangesAsync();
-
-        return (
-            new UserDto
-            {
-                Id = user.Id,
-                Name = user.Name,
-                Email = user.Email,
-                IsActive = user.IsActive,
-                CompanyId = user.CompanyId
-            },
-            null
-        );
-    }
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            IsActive = user.IsActive,
+            CompanyId = user.CompanyId
+        },
+        null
+    );
+}
 
 
  public async Task<(AuthResponseDto? Response, string? Error)> LoginAsync(
