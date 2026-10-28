@@ -262,5 +262,123 @@ public class TenantIsolationTests
         Assert.False(
             appointment.GetProperty("isCancelled").GetBoolean());
     }
+
+    [Fact]
+    public async Task CompanyCannotCreateCustomerForAnotherCompany()
+    {
+        using var factory = new CustomWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var companyA = await RegisterAndLoginAsync(client, "CreateCustomerA");
+        var companyB = await RegisterAndLoginAsync(client, "CreateCustomerB");
+
+        // A empresa A tenta criar um cliente enviando o ID da empresa B.
+        UseToken(client, companyA.Token);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/Customers",
+            new
+            {
+                Name = "Cliente Criado pela Empresa A",
+                Email = "cliente.criacao.a@test.local",
+                Phone = "11977776666",
+                CompanyId = companyB.Id
+            });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var createdCustomer = await response.Content
+            .ReadFromJsonAsync<JsonElement>(JsonOptions);
+
+        var customerId = createdCustomer
+            .GetProperty("id")
+            .GetInt32();
+
+        // O cliente deve pertencer à empresa A, apesar do ID enviado.
+        Assert.Equal(
+            companyA.Id,
+            createdCustomer.GetProperty("companyId").GetInt32());
+
+        // A empresa B não pode acessar o cliente criado por A.
+        UseToken(client, companyB.Token);
+
+        var companyBResponse = await client.GetAsync(
+            $"/api/Customers/{customerId}");
+
+        Assert.Equal(HttpStatusCode.NotFound, companyBResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task CompanyCannotCreateAppointmentForAnotherCompanyCustomer()
+    {
+        using var factory = new CustomWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var companyA = await RegisterAndLoginAsync(client, "CreateAppointmentA");
+        var companyB = await RegisterAndLoginAsync(client, "CreateAppointmentB");
+
+        // Criar um cliente pertencente à empresa B.
+        UseToken(client, companyB.Token);
+
+        var customerResponse = await client.PostAsJsonAsync(
+            "/api/Customers",
+            new
+            {
+                Name = "Cliente Exclusivo da Empresa B",
+                Email = "cliente.agendamento.b@test.local",
+                Phone = "11966665555",
+                CompanyId = companyB.Id
+            });
+
+        Assert.Equal(HttpStatusCode.Created, customerResponse.StatusCode);
+
+        var createdCustomer = await customerResponse.Content
+            .ReadFromJsonAsync<JsonElement>(JsonOptions);
+
+        var customerId = createdCustomer
+            .GetProperty("id")
+            .GetInt32();
+
+        // A empresa A tenta agendar para o cliente da empresa B.
+        UseToken(client, companyA.Token);
+
+        var startAt = DateTime.UtcNow.AddDays(2);
+        var endAt = startAt.AddHours(1);
+
+        var appointmentResponse = await client.PostAsJsonAsync(
+            "/api/Appointments",
+            new
+            {
+                Title = "Tentativa de Agendamento Indevido",
+                StartAt = startAt,
+                EndAt = endAt,
+                Notes = "Este agendamento não deve ser criado.",
+                CompanyId = companyB.Id,
+                CustomerId = customerId
+            });
+
+        Assert.Equal(HttpStatusCode.BadRequest, appointmentResponse.StatusCode);
+
+        // A empresa A não deve ter nenhum agendamento criado.
+        var appointmentsResponse = await client.GetAsync(
+            "/api/Appointments");
+
+        Assert.Equal(HttpStatusCode.OK, appointmentsResponse.StatusCode);
+
+        var appointments = await appointmentsResponse.Content
+            .ReadFromJsonAsync<List<JsonElement>>(JsonOptions);
+
+        Assert.NotNull(appointments);
+        Assert.Empty(appointments);
+
+        // O cliente original continua acessível à empresa B.
+        UseToken(client, companyB.Token);
+
+        var verifyCustomerResponse = await client.GetAsync(
+            $"/api/Customers/{customerId}");
+
+        Assert.Equal(HttpStatusCode.OK, verifyCustomerResponse.StatusCode);
+    }
+
 }
 
