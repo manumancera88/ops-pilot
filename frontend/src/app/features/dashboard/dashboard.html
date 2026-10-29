@@ -1,0 +1,18 @@
+<header class="topbar">
+  <strong>OpsPilot</strong>
+  <div>
+    <span>{{ user()?.name }}</span>
+    <button type="button" (click)="logout()">Sair</button>
+  </div>
+</header>
+
+<main>
+  @if (company(); as c) {
+  <h1>{{ c.name }}</h1>
+  <p>Empresa #{{ c.id }}</p>
+  } @else if (error()) {
+  <p class="error">{{ error() }}</p>
+  } @else {
+  <p>Carregando...</p>
+  }
+</main>
