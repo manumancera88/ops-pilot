@@ -1,0 +1,23 @@
+<div class="login-container">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <h1>OpsPilot</h1>
+
+    <label for="email">E-mail</label>
+    <input id="email" type="email" formControlName="email" />
+    @if (form.get('email')?.touched && form.get('email')?.invalid) {
+    <span class="error">E-mail inválido.</span>
+    }
+
+    <label for="password">Senha</label>
+    <input id="password" type="password" formControlName="password" />
+    @if (form.get('password')?.touched && form.get('password')?.invalid) {
+    <span class="error">Senha obrigatória.</span>
+    } @if (errorMessage()) {
+    <div class="error-banner">{{ errorMessage() }}</div>
+    }
+
+    <button type="submit" [disabled]="loading()">
+      {{ loading() ? 'Entrando...' : 'Entrar' }}
+    </button>
+  </form>
+</div>
