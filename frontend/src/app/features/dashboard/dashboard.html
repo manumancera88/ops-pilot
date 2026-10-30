@@ -10,9 +10,53 @@
   @if (company(); as c) {
   <h1>{{ c.name }}</h1>
   <p>Empresa #{{ c.id }}</p>
-  } @else if (error()) {
+  } @if (error()) {
   <p class="error">{{ error() }}</p>
-  } @else {
-  <p>Carregando...</p>
   }
+
+  <section>
+    <h2>Novo cliente</h2>
+    <form [formGroup]="form" (ngSubmit)="addCustomer()">
+      <label for="name">Nome</label>
+      <input id="name" type="text" formControlName="name" />
+      @if (form.get('name')?.touched && form.get('name')?.invalid) {
+      <span class="error">Nome obrigatório.</span>
+      }
+
+      <label for="email">E-mail</label>
+      <input id="email" type="email" formControlName="email" />
+      @if (form.get('email')?.touched && form.get('email')?.invalid) {
+      <span class="error">E-mail inválido.</span>
+      }
+
+      <label for="phone">Telefone</label>
+      <input id="phone" type="text" formControlName="phone" />
+
+      @if (formError()) {
+      <div class="error-banner">{{ formError() }}</div>
+      }
+
+      <button type="submit" [disabled]="saving()">
+        {{ saving() ? 'Salvando...' : 'Adicionar' }}
+      </button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Clientes ({{ customers().length }})</h2>
+    @if (loadingCustomers()) {
+    <p>Carregando...</p>
+    } @else if (customers().length === 0) {
+    <p>Nenhum cliente cadastrado ainda.</p>
+    } @else {
+    <ul>
+      @for (c of customers(); track c.id) {
+      <li>
+        {{ c.name }} @if (c.email) { · {{ c.email }} } @if (c.phone) { · {{
+        c.phone }} }
+      </li>
+      }
+    </ul>
+    }
+  </section>
 </main>
