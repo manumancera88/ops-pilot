@@ -1,0 +1,145 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+
+  strong {
+    color: var(--navy);
+    font-size: 18px;
+  }
+
+  div {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  button {
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+    background: transparent;
+    border: 1.5px solid var(--navy);
+    border-radius: 999px;
+    cursor: pointer;
+
+    &:hover {
+      color: #fff;
+      background: var(--navy);
+    }
+  }
+}
+
+main {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+
+main > h1 {
+  font-size: 32px;
+  color: var(--navy);
+}
+
+main > p {
+  margin: 4px 0 28px;
+  color: var(--muted);
+}
+
+section {
+  margin-bottom: 24px;
+  padding: 28px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 10px 32px rgba(29, 53, 87, 0.05);
+}
+
+h2 {
+  margin-bottom: 18px;
+  font-size: 18px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 460px;
+}
+
+label {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+input {
+  padding: 11px 14px;
+  font-size: 15px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+
+  &:focus {
+    outline: none;
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(29, 53, 87, 0.12);
+  }
+}
+
+form button {
+  margin-top: 16px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--navy);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.error {
+  font-size: 13px;
+  color: var(--danger);
+}
+
+.error-banner {
+  margin-top: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--danger);
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  border-radius: 10px;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+li {
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--line);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
