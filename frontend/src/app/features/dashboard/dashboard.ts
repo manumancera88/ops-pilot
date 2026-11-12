@@ -5,7 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { Auth } from "../../core/services/auth";
 import { Customers } from "../../core/services/customers";
 import { CustomerDto } from "../../core/services/models/customer.models";
-
+import { AppointmentPanel } from "../appointment-panel/appointment-panel";
 interface CompanyDto {
   id: number;
   name: string;
@@ -15,7 +15,7 @@ interface CompanyDto {
 
 @Component({
   selector: "app-dashboard",
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, AppointmentPanel],
   templateUrl: "./dashboard.html",
   styleUrl: "./dashboard.scss",
 })

@@ -5,7 +5,7 @@
     <button type="button" (click)="logout()">Sair</button>
   </div>
 </header>
-
+<app-appointment-panel [customers]="customers()" />
 <main>
   @if (company(); as c) {
   <h1>{{ c.name }}</h1>

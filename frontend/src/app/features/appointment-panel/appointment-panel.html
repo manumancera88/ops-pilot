@@ -1,0 +1,74 @@
+<section>
+  <h2>Novo agendamento</h2>
+
+  @if (customers().length === 0) {
+  <p class="hint">Cadastre um cliente antes de criar um agendamento.</p>
+  } @else {
+  <form [formGroup]="form" (ngSubmit)="add()">
+    <label for="title">Título</label>
+    <input id="title" type="text" formControlName="title" />
+    @if (form.get('title')?.touched && form.get('title')?.invalid) {
+    <span class="error">Título obrigatório.</span>
+    }
+
+    <label for="customerId">Cliente</label>
+    <select id="customerId" formControlName="customerId">
+      <option [ngValue]="null" disabled>Selecione...</option>
+      @for (c of customers(); track c.id) {
+      <option [ngValue]="c.id">{{ c.name }}</option>
+      }
+    </select>
+    @if (form.get('customerId')?.touched && form.get('customerId')?.invalid) {
+    <span class="error">Selecione um cliente.</span>
+    }
+
+    <label for="startAt">Início</label>
+    <input id="startAt" type="datetime-local" formControlName="startAt" />
+
+    <label for="endAt">Fim</label>
+    <input id="endAt" type="datetime-local" formControlName="endAt" />
+
+    <label for="notes">Observações</label>
+    <input id="notes" type="text" formControlName="notes" />
+
+    @if (formError()) {
+    <div class="error-banner">{{ formError() }}</div>
+    }
+
+    <button type="submit" [disabled]="saving()">
+      {{ saving() ? 'Salvando...' : 'Agendar' }}
+    </button>
+  </form>
+  }
+</section>
+
+<section>
+  <h2>Agendamentos ({{ appointments().length }})</h2>
+
+  @if (error()) {
+  <p class="error">{{ error() }}</p>
+  } @else if (loading()) {
+  <p>Carregando...</p>
+  } @else if (appointments().length === 0) {
+  <p>Nenhum agendamento ainda.</p>
+  } @else {
+  <ul>
+    @for (a of sorted(); track a.id) {
+    <li>
+      <strong>{{ a.title }}</strong>
+      <span
+        >{{ customerNames().get(a.customerId) ?? 'Cliente não encontrado'
+        }}</span
+      >
+      <span
+        >{{ a.startAt | date: 'dd/MM/yyyy HH:mm' }} até {{ a.endAt | date:
+        'dd/MM/yyyy HH:mm' }}</span
+      >
+      @if (a.isCancelled) {
+      <em>Cancelado</em>
+      }
+    </li>
+    }
+  </ul>
+  }
+</section>
