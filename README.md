@@ -1,5 +1,7 @@
 # OpsPilot AI
 
+![tests](https://github.com/manumancera88/ops-pilot/actions/workflows/tests.yml/badge.svg)
+
 Aplicação web multiempresa (SaaS) para gestão de clientes e agendamentos, construída com **Angular 21**, **.NET 10** e **SQL Server**. Cada empresa só enxerga e altera os próprios dados, e essa regra é verificada por testes automatizados.
 
 ## Capturas de tela
